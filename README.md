@@ -3,3 +3,6 @@ Simple test cases for the ROS interface for SHERPA World Model (SWM). Inputs dat
 
 Sherpa World Model (SWM): <br>
 https://github.com/blumenthal/ubx_robotscenegraph
+
+Mediator: <br>
+https://github.com/maccradar/sherpa-com-mediator
