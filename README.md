@@ -6,3 +6,6 @@ https://github.com/blumenthal/ubx_robotscenegraph
 
 Mediator: <br>
 https://github.com/maccradar/sherpa-com-mediator
+
+
+- Human detection: https://github.com/blumenthal/ubx_robotscenegraph/blob/master/examples/zyre/swmzyre.c#L598
