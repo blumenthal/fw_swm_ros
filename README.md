@@ -8,6 +8,7 @@ Mediator: <br>
 https://github.com/maccradar/sherpa-com-mediator
 
 
+# Functionality
 - Human detection: https://github.com/blumenthal/ubx_robotscenegraph/blob/master/examples/zyre/swmzyre.h#L74
 - Add agent: https://github.com/blumenthal/ubx_robotscenegraph/blob/master/examples/zyre/swmzyre.h#L76
 - Update pose: https://github.com/blumenthal/ubx_robotscenegraph/blob/master/examples/zyre/swmzyre.h#L78
