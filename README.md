@@ -1,7 +1,7 @@
 # fw_swm_ros
 ROS interface for SHERPA World Model (SWM). 
 
-* Inputs data such as human detections, robot poses, DEM, orthomosaic.
+* Inputs data such as human detections, robot poses, raw images, digital elevation model (DEM), orthomosaic.
 * Two modes: rosbag, rosstream
 
 # Important links
