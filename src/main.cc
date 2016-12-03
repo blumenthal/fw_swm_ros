@@ -1,55 +1,49 @@
-#include <Eigen/Dense>
 #include <gflags/gflags.h>
+#include <glog/logging.h>
 #include <iostream>
-#include <memory> // shared_ptr
 #include <ros/ros.h>
-#include <sensor_msgs/NavSatFix.h>
 #include <string>
 
-extern "C" {
-#include "/usr/local/include/swmzyre.h"
-}
+#include "swm_ros/swm_ros.h"
 
-DEFINE_string(config_filename, "/home/timo/catkin_ws/src/swm_ros/src/swm_zyre_config.json",
-              "Path and filename of swm_zyre_config.json");
+DEFINE_string(config_filename, "", "Path and filename of swm_zyre_config.json");
+DEFINE_string(rosbag_filename, "", "Path and filename of rosbag");
+DEFINE_string(topic_raw_image, "/cam0/image_raw", "Raw image topic.");
+DEFINE_string(topic_estimated_position, "/mavros/global_position/global",
+              "Estimated position of the robot");
+DEFINE_string(topic_estimated_orientation, "/mavros/imu/data",
+              "Estimated orientation of the robot");
+DEFINE_string(topic_victim_position, "/victim_position",
+              "Position of the victim in lat/lon/alt");
+DEFINE_string(agent_name, "fw0", "Name of the agent.");
+DEFINE_string(image_base_name, "/tmp/image", "Image directory and base name.");
+DEFINE_int32(mode, 0, "mode 0: Load Rosbag; mode 1: Live Ros stream");
+
 
 int main(int argc, char *argv[]) {
+  google::InitGoogleLogging(argv[0]);
+  google::ParseCommandLineFlags(&argc, &argv, true);
+  CHECK(FLAGS_config_filename != "") << "You need to enter path to config.";
   ros::init(argc, argv, "swm_zyre");
   ros::Time::init();
 
-  sensor_msgs::NavSatFix human_detection;
-  human_detection.latitude = 42.0;
-  human_detection.longitude = 14.0;
-  human_detection.altitude = 415.0;
-  human_detection.header.stamp = ros::Time::now();
+  sherpa::mode selected_mode = static_cast<sherpa::mode>(FLAGS_mode);
+  sherpa::SwmRos app(selected_mode, FLAGS_config_filename,
+                     FLAGS_rosbag_filename, FLAGS_topic_raw_image,
+                     FLAGS_topic_estimated_position,
+                     FLAGS_topic_estimated_orientation,
+                     FLAGS_topic_victim_position,
+                     FLAGS_agent_name, FLAGS_image_base_name);
 
-  // Load configuration file for communication setup.
-  char* config_filename = FLAGS_config_filename;
-  json_t* config = load_config_file(config_filename);
-  if (config == NULL) {
-    return -1;
+  switch (selected_mode) {
+  case sherpa::mode::rosbag:
+    app.processRosbag();
+    break;
+  case sherpa::mode::rosstream:
+    app.processLiveRosStream();
+    break;
   }
-
-  // Spawn new communication component.
-  component_t* self = new_component(config);
-  if (self == NULL) {
-      return -1;
-  }
-  printf("[%s] component initialized!\n", self->name);
-
-  VLOG(1) << "Add victims to SWM ..." << std::endl;
-
-  // "Stress test".
-  for (size_t i = 0u; i < 100; ++i) {
-    add_victim(self, human_detection.latitude,
-               human_detection.longitude,
-               human_detection.altitude,
-               human_detection.header.stamp.toSec() * 1.0e3,
-               "hawk");
-  }
-  VLOG(1) << "Done!" << std::endl;
-  free(config_filename);
-  free(config);
+  ros::spinOnce();
 
   return 0;
 }
