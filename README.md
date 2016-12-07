@@ -4,6 +4,27 @@ ROS interface for SHERPA World Model (SWM).
 * Inputs data such as human detections, robot poses, raw images, digital elevation model (DEM), orthomosaic.
 * Two modes: rosbag, rosstream
 
+# Installing
+Create a catkin workspace (if not existing already):
+```
+mkdir -p ~/catkin_ws/src
+cd catkin_ws/
+catkin init
+```
+Install the dependencies:
+```
+cd src/
+git clone git@github.com:ethz-asl/fw_swm_ros.git
+wstool init
+wstool merge fw_swm_ros/install/dependencies.rosinstall
+wstool update
+```
+Compile:
+```
+catkin build fw_swm_ros --cmake-args -DCMAKE_BUILD_TYPE=Release
+
+```
+
 # Important links
 
 Sherpa World Model (SWM): <br>
