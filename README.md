@@ -21,7 +21,7 @@ wstool update
 ```
 Compile:
 ```
-catkin build fw_swm_ros --cmake-args -DCMAKE_BUILD_TYPE=Release
+catkin build swm_ros --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 ```
 
