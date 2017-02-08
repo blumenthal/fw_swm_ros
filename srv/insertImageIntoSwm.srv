@@ -1,0 +1,4 @@
+std_msgs/String path_to_image
+int64 type_of_image # 0:DEM-Tiff, 1:Orthomosaic-Tiff 
+---
+std_msgs/Bool success

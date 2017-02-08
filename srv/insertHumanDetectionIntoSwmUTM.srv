@@ -1,0 +1,4 @@
+geometry_msgs/Point human_location_UTM
+int64 time_of_observation_ns
+---
+std_msgs/Bool success
