@@ -32,7 +32,8 @@ SwmRos::SwmRos(std::string config_filename,
   topic_raw_image_(topic_raw_image),
   topic_estimated_robot_position_(topic_estimated_robot_position),
   topic_estimated_robot_orientation_(topic_estimated_robot_orientation),
-  topic_victim_position_(topic_victim_position), agent_name_(&agent_name[0u]),
+  topic_victim_position_(topic_victim_position),
+  agent_name_(const_cast<char*>(agent_name.c_str())),
   image_base_name_(image_base_name), image_transport_(node_handle_) {
   CHECK(rosbag_filename_ != "") << "You need to enter path to rosbag.";
   initialize();
@@ -48,7 +49,8 @@ SwmRos::SwmRos(std::string config_filename,
   config_filename_(config_filename), topic_raw_image_(topic_raw_image),
   topic_estimated_robot_position_(topic_estimated_robot_position),
   topic_estimated_robot_orientation_(topic_estimated_robot_orientation),
-  topic_victim_position_(topic_victim_position), agent_name_(&agent_name[0u]),
+  topic_victim_position_(topic_victim_position),
+  agent_name_(const_cast<char*>(agent_name.c_str())),
   image_base_name_(image_base_name), image_transport_(node_handle_) {
   initialize();
   registerSubscriber();
@@ -80,7 +82,7 @@ bool SwmRos::insertImage(swm_ros::insertImageIntoSwm::Request &req,
                          swm_ros::insertImageIntoSwm::Response &resp) {
   double utc_time_ms = rosToMilliSeconds(ros::Time::now());
   assert(add_image(self_, current_robot_pose_.data(), utc_time_ms, agent_name_,
-                   &req.path_to_image[0u]));
+                   const_cast<char*>(req.path_to_image.c_str())));
   resp.success.data = true;
 }
 
@@ -158,7 +160,7 @@ void SwmRos::rawImageCallback(const sensor_msgs::ImageConstPtr& image_message) {
     cv::imwrite(image_name, cv_ptr->image.clone());
     double utc_time_ms = image_message->header.stamp.toSec() * 1.0e3;
     assert(add_image(self_, current_robot_pose_.data(), utc_time_ms, agent_name_,
-                     &image_name[0u]));
+                     const_cast<char*>(image_name.c_str())));
   }
 }
 
@@ -268,7 +270,8 @@ void SwmRos::processRosbag() {
       std::string image_name = image_base_name_ + std::to_string(++image_counter_) + ".jpg";
       cv::imwrite(image_name, cv_ptr->image.clone());
       double utc_time_ms = image_message->header.stamp.toSec() * 1.0e3;
-      assert(add_image(self_, current_robot_pose_.data(), utc_time_ms, agent_name_, &image_name[0u]));
+      assert(add_image(self_, current_robot_pose_.data(), utc_time_ms, agent_name_,
+                       const_cast<char*>(image_name.c_str())));
     }
 
     // Add compressed image messages to SHERPA World Model (SVM).
@@ -290,7 +293,8 @@ void SwmRos::processRosbag() {
       std::string image_name = image_base_name_ + std::to_string(++image_counter_) + ".jpg";
       cv::imwrite(image_name, cv_ptr->image.clone());
       double utc_time_ms = compressed_image_message->header.stamp.toSec() * 1.0e3;
-      assert(add_image(self_, current_robot_pose_.data(), utc_time_ms, agent_name_, &image_name[0u]));
+      assert(add_image(self_, current_robot_pose_.data(), utc_time_ms, agent_name_,
+                       const_cast<char*>(image_name.c_str())));
     }
 
     // Update robot position estimate.
