@@ -17,22 +17,48 @@
 // along with fw_swm_ros.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "swm_ros/swm_ros.h"
+#include "swm_ros/gps_conversions.h"
 
 namespace sherpa {
 
-SwmRos::SwmRos(sherpa::mode mode, std::string config_filename,
+// Ctor for node_rosbag.
+SwmRos::SwmRos(std::string config_filename,
                std::string rosbag_filename, std::string topic_raw_image,
                std::string topic_estimated_robot_position,
                std::string topic_estimated_robot_orientation,
                std::string topic_victim_position, std::string agent_name,
                std::string image_base_name) :
-  rosbag_filename_(rosbag_filename), topic_raw_image_(topic_raw_image),
+  config_filename_(config_filename), rosbag_filename_(rosbag_filename),
+  topic_raw_image_(topic_raw_image),
   topic_estimated_robot_position_(topic_estimated_robot_position),
   topic_estimated_robot_orientation_(topic_estimated_robot_orientation),
   topic_victim_position_(topic_victim_position), agent_name_(&agent_name[0u]),
   image_base_name_(image_base_name), image_transport_(node_handle_) {
+  CHECK(rosbag_filename_ != "") << "You need to enter path to rosbag.";
+  initialize();
+}
+
+// Ctor for node_rosstream.
+SwmRos::SwmRos(std::string config_filename,
+               std::string topic_raw_image,
+               std::string topic_estimated_robot_position,
+               std::string topic_estimated_robot_orientation,
+               std::string topic_victim_position, std::string agent_name,
+               std::string image_base_name) :
+  config_filename_(config_filename), topic_raw_image_(topic_raw_image),
+  topic_estimated_robot_position_(topic_estimated_robot_position),
+  topic_estimated_robot_orientation_(topic_estimated_robot_orientation),
+  topic_victim_position_(topic_victim_position), agent_name_(&agent_name[0u]),
+  image_base_name_(image_base_name), image_transport_(node_handle_) {
+  initialize();
+  registerSubscriber();
+  registerServices();
+}
+
+void SwmRos::initialize() {
   // Load configuration file for communication setup.
-  json_t* config = load_config_file(const_cast<char*>(config_filename.c_str()));
+  VLOG(1) << "Config filename: '" << config_filename_ << "'";
+  json_t* config = load_config_file(const_cast<char*>(config_filename_.c_str()));
   CHECK(config == NULL) << "Config not loaded successfully.";
 
   // Spawn new communication component.
@@ -42,17 +68,50 @@ SwmRos::SwmRos(sherpa::mode mode, std::string config_filename,
   printf("[%s] component initialized!\n", self_->name);
   free(config);
 
-  CHECK(rosbag_filename_ != "") << "You need to enter path to rosbag.";
   agent_added_ = false;
   new_robot_position_estimate_available_ = false;
   new_robot_orientation_estimate_available_ = false;
   robot_pose_initialized_ = false;
   current_utc_time_ms_ = 0.0;
   image_counter_ = 0;
+}
 
-  if (mode == sherpa::mode::rosstream) {
-    registerSubscriber();
-  }
+bool SwmRos::insertImage(swm_ros::insertImageIntoSwm::Request &req,
+                         swm_ros::insertImageIntoSwm::Response &resp) {
+  double utc_time_ms = rosToMilliSeconds(ros::Time::now());
+  assert(add_image(self_, current_robot_pose_.data(), utc_time_ms, agent_name_,
+                   &req.path_to_image[0u]));
+  resp.success.data = true;
+}
+
+bool SwmRos::insertHumanDetection(swm_ros::insertHumanDetectionIntoSwmUTM::Request &req,
+                                  swm_ros::insertHumanDetectionIntoSwmUTM::Response &resp) {
+  double utc_time_ms = req.time_of_observation_ns * 1.0e-6;
+  // To avoid misunderstandings:
+  const double northing = req.human_location_UTM.y;
+  const double easting = req.human_location_UTM.x;
+  const double altitude = req.human_location_UTM.z;
+
+  // Switzerland.
+  double latitude, longitude;
+  UTM::UTMtoLL(northing, easting, UTM_zone_, latitude, longitude);
+  VLOG(1) << "Human detection at: [lat/long/alt]: [" << latitude << "/"
+          << longitude << "/" << altitude << "] <==> [easting/northing/alt]: ["
+          << easting << "/" << northing << "/" << altitude << "]";
+
+  Eigen::Matrix4d victim_pose;
+  victim_pose.setIdentity();
+  victim_pose.block<3, 1>(0, 3) << Eigen::Vector3d(latitude, longitude, altitude);
+  assert(add_victim(self_, victim_pose.data(), utc_time_ms, agent_name_));
+  resp.success.data = true;
+}
+
+void SwmRos::registerServices() {
+  service_image_insertion_ =
+      node_handle_.advertiseService("/fw_swm_ros/image_insertion", &SwmRos::insertImage, this);
+  service_human_detection_insertion_ =
+      node_handle_.advertiseService("/fw_swm_ros/human_detection_insertion",
+                                    &SwmRos::insertHumanDetection, this);
 }
 
 void SwmRos::registerSubscriber() {

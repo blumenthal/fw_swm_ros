@@ -34,6 +34,10 @@
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/NavSatFix.h>
 
+#include <swm_ros/insertImageIntoSwm.h>
+#include <swm_ros/insertHumanDetectionIntoSwmUTM.h>
+
+
 extern "C" {
 #include "/usr/local/include/swmzyre.h"
 }
@@ -47,8 +51,15 @@ enum mode {
 class SwmRos {
  public:
 
-  SwmRos(sherpa::mode mode, std::string config_filename,
+  SwmRos(std::string config_filename,
          std::string rosbag_filename, std::string topic_raw_image,
+         std::string topic_estimated_robot_position,
+         std::string topic_estimated_robot_orientation,
+         std::string topic_victim_position, std::string agent_name,
+         std::string image_base_name);
+
+  SwmRos(std::string config_filename,
+         std::string topic_raw_image,
          std::string topic_estimated_robot_position,
          std::string topic_estimated_robot_orientation,
          std::string topic_victim_position, std::string agent_name,
@@ -61,12 +72,20 @@ class SwmRos {
   void processLiveRosStream();
 
  private:
+  void initialize();
   void estimatedRobotPositionCallback(const sensor_msgs::NavSatFixConstPtr& message);
   void estimatedRobotOrientationCallback(const sensor_msgs::ImuConstPtr& message);
   void victimPositionCallback(const sensor_msgs::NavSatFixConstPtr& message);
   void rawImageCallback(const sensor_msgs::ImageConstPtr& message);
 
   void registerSubscriber();
+
+  void registerServices();
+
+  bool insertImage(swm_ros::insertImageIntoSwm::Request &req,
+                   swm_ros::insertImageIntoSwm::Response &resp);
+  bool insertHumanDetection(swm_ros::insertHumanDetectionIntoSwmUTM::Request &req,
+                            swm_ros::insertHumanDetectionIntoSwmUTM::Response &resp);
 
   double inline rosToSeconds(const ros::Time time) {
    return time.sec + time.nsec / 1.0e9;
@@ -102,9 +121,15 @@ class SwmRos {
   Eigen::Vector3d current_robot_position_;
   Eigen::Quaterniond current_robot_orientation_;
   double current_utc_time_ms_;
+  std::string config_filename_;
+  // E.g. Switzerland.
+  char const *UTM_zone_ = "32T";
 
   /// Counter for the images saved to the ground station.
   int64_t image_counter_;
+  ros::ServiceServer service_image_insertion_;
+  ros::ServiceServer service_human_detection_insertion_;
+
 };
 } // namespace sherpa
 #endif // SWM_ROS_H_
