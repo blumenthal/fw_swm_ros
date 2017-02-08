@@ -82,7 +82,7 @@ bool SwmRos::insertImage(swm_ros::insertImageIntoSwm::Request &req,
                          swm_ros::insertImageIntoSwm::Response &resp) {
   double utc_time_ms = rosToMilliSeconds(ros::Time::now());
   assert(add_image(self_, current_robot_pose_.data(), utc_time_ms, agent_name_,
-                   const_cast<char*>(req.path_to_image.c_str())));
+                   const_cast<char*>(req.path_to_image.data.c_str())));
   resp.success.data = true;
 }
 
