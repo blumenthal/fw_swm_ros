@@ -25,6 +25,28 @@ catkin build swm_ros --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 ```
 
+# Running
+From rosstream:
+```
+rosrun swm_ros swm_ros_rosstream --config_filename=.swm_zyre_config.json --alsologtostderr=true --v=100
+```
+Run the sherpa world model:
+```
+./run_sherpa_world_model.sh --no-ros
+```
+Insert human detection as rosservice call from command line:
+```
+rosservice call /fw_swm_ros/human_detection_insertion "human_location_UTM:
+  x: 464980
+  y: 5.27226e+06
+  z: 414.087
+  ```
+  Display the resulting graph of the sherpa world model:
+  ```
+./show.sh
+xdg-open *gv.pdf
+```
+
 # Important links
 
 Sherpa World Model (SWM): <br>
@@ -34,7 +56,7 @@ Mediator: <br>
 https://github.com/maccradar/sherpa-com-mediator
 
 Functionality in SWM:
-- Human detection: https://github.com/blumenthal/ubx_robotscenegraph/blob/master/examples/zyre/swmzyre.h#L74
+- Add human detection: https://github.com/blumenthal/ubx_robotscenegraph/blob/master/examples/zyre/swmzyre.h#L74
 - Add agent: https://github.com/blumenthal/ubx_robotscenegraph/blob/master/examples/zyre/swmzyre.h#L76
 - Update pose: https://github.com/blumenthal/ubx_robotscenegraph/blob/master/examples/zyre/swmzyre.h#L78
 
