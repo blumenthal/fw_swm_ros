@@ -40,6 +40,7 @@ rosservice call /fw_swm_ros/human_detection_insertion "human_location_UTM:
   x: 464980
   y: 5.27226e+06
   z: 414.087
+  time_of_observation_ns: 0"
   ```
   Display the resulting graph of the sherpa world model:
   ```
