@@ -61,11 +61,11 @@ void SwmRos::initialize() {
   // Load configuration file for communication setup.
   VLOG(1) << "Config filename: '" << config_filename_ << "'";
   json_t* config = load_config_file(const_cast<char*>(config_filename_.c_str()));
-  CHECK(config == NULL) << "Config not loaded successfully.";
+  CHECK(config != NULL) << "Config not loaded successfully.";
 
   // Spawn new communication component.
   self_ = new_component(config);
-  CHECK(self_ == NULL) << "Config not loaded successfully.";
+  CHECK(self_ != NULL) << "Config not loaded successfully.";
 
   printf("[%s] component initialized!\n", self_->name);
   free(config);
